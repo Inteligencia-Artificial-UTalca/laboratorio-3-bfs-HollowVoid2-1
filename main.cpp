@@ -13,13 +13,35 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
+    int x1, y1, x2, y2;
+    try {
+        x1 = std::stoi(argv[2]);
+        y1 = std::stoi(argv[3]);
+        x2 = std::stoi(argv[4]);
+        y2 = std::stoi(argv[5]);
+    } catch (...) {
+        std::cerr << "Error: las coordenadas deben ser numeros enteros\n";
+        return 1;
+    }
+
     //Load map with class Map
     Map map(argv[1]);
     ColorMap colorMap(map);
     colorMap.print();
 
+    if (x1 < 0 || x1 >= map.h || y1 < 0 || y1 >= map.w ||
+        x2 < 0 || x2 >= map.h || y2 < 0 || y2 >= map.w) {
+        
+        std::cerr << "Error: coordenadas fuera del mapa\n";
+        return 1;
+    }
+
     auto path = Search::BFS(map,{atoi(argv[2]),atoi(argv[3])},{atoi(argv[4]),atoi(argv[5])}); 
-    colorMap.print(path);
+    if (path.empty()) {
+        std::cout << "No path found\n";
+    } else {
+        colorMap.print(path);
+    }
     
     //Calculate path distance
     //Print path distance
