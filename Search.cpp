@@ -52,12 +52,16 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
     std::unordered_map<std::pair<int,int>,std::pair<int,int>> pathCache;    ////hashmap to reconstruct path: child -> parent
 
     //add firts node to open list
+    OPEN.push(start);
+    visited[start.first][start.second] = true;
 
     while(!OPEN.empty()){
         //get node
+        auto pos = OPEN.front();
+        OPEN.pop();
 
         //check if node is goal
-		/*if(pos==goal){
+		if(pos==goal){
 			auto endTime = std::chrono::high_resolution_clock::now();
 			int count=0;
             for(int i=0;i<map.h;i++){
@@ -69,18 +73,35 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
 			std::cout<<"OPEN: "<<OPEN.size()<<std::endl;
 			std::cout<<"FOUND in "<<(endTime-startTime).count()/1000000.0<<"ms\n";
 			return reconstruct(pathCache,pos);
-		}*/
+		}
 
 		for(auto dir:dirs){
 			//copy the position
+            auto next = pos;
 
             //then move it
+            next.first += dir.first;
+            next.second += dir.second;
+
+            if(next.first < 0 || next.first >= map.h || 
+                next.second < 0 || next.second >= map.w)
+                    continue;
+
+            if(map._map[next.first][next.second] == 1 || 
+                visited[next.first][next.second])
+                    continue;
+            
+            visited[next.first][next.second] = true;
+
+            OPEN.push(next);
             
             //if illegal or visited, skip it
             
             //add child to open list
 
             //register path
+
+            pathCache[next] = pos;
 		}
 	}
 	std::cout<<"NOT FOUND!!!!\n";
