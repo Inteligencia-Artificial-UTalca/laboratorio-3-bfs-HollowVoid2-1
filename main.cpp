@@ -44,7 +44,16 @@ int main(int argc, char *argv[]){
     }
     
     //Calculate path distance
-    //Print path distance
+    if (path.empty()) {
+    std::cout << "No path found\n";
+    } else {
+
+        //Print path distance
+        colorMap.print(path);
+
+        int distance = path.size() - 1;
+        std::cout << "Distancia: " << distance << std::endl;
+    }
     
     return 0;
 }
