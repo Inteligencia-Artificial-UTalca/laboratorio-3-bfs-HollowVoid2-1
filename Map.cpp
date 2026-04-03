@@ -7,12 +7,31 @@ Map::Map():h(0),w(0){
 }
 
 Map::Map(std::string filename){
-    
-    //Load the file
-    //Resize map
-    //Save file information in map
-    //Close file
-}   
+
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: no se pudo abrir el archivo\n";
+        h = 0;
+        w = 0;
+        return;
+    }
+
+    // Leer dimensiones
+    file >> h >> w;
+
+    // Redimensionar mapa
+    _map.resize(h, std::vector<int>(w));
+
+    // Leer datos del mapa
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            file >> _map[i][j];
+        }
+    }
+
+    file.close();
+}
 
 Map::Map(const Map& rhs):h(rhs.h),w(rhs.w),_map(rhs._map){
 

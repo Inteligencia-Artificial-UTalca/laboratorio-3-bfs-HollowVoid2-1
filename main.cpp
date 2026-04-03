@@ -29,8 +29,8 @@ int main(int argc, char *argv[]){
     ColorMap colorMap(map);
     colorMap.print();
 
-    if (x1 < 0 || x1 >= map.h || y1 < 0 || y1 >= map.w ||
-        x2 < 0 || x2 >= map.h || y2 < 0 || y2 >= map.w) {
+    if (x1 < 0 || x1 >= map.getHeight() || y1 < 0 || y1 >= map.getWidth() ||
+        x2 < 0 || x2 >= map.getHeight() || y2 < 0 || y2 >= map.getWidth()) {
         
         std::cerr << "Error: coordenadas fuera del mapa\n";
         return 1;
