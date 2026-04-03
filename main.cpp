@@ -8,6 +8,10 @@ int main(int argc, char *argv[]){
 
     //Verify that the amount of arguments is correct
     //6 arguments: program name, map file, x1, y1, x2, y2
+    if (argc != 6) {
+        std::cerr << "Uso: " << argv[0] << " <mapa> <x_inicio> <y_inicio> <x_fin> <y_fin>\n";
+        return 1;
+    }
 
     //Load map with class Map
     Map map(argv[1]);
