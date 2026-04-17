@@ -21,6 +21,24 @@ namespace std
 	};
 }
 
+// Estructura para guardar en la Priority Queue
+struct Node {
+    std::pair<int, int> pos;
+    float priority;
+};
+
+// Functor para comparación (Min-Priority Queue)
+struct CompareNodes {
+    bool operator()(const Node& n1, const Node& n2) {
+        return n1.priority > n2.priority; // El menor valor tiene mayor prioridad
+    }
+};
+
+float Search::Heuristic(std::pair<int, int> start, std::pair<int, int> goal) {
+    // Implementación Manhattan
+    return std::abs(start.first - goal.first) + std::abs(start.second - goal.second);
+}
+
 std::vector<std::pair<int,int>> Search::reconstruct(const std::unordered_map<std::pair<int,int>,std::pair<int,int>> &pathCache, const std::pair<int,int> &start){
 	std::deque<std::pair<int,int>> nodes;
 	auto node = start;//make copy
