@@ -135,3 +135,52 @@ std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> s
     path.push_back(goal);
     return path;
 }
+
+std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) {
+    std::cout << "===========================\nRunning Greedy Best-First Search...\n";
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    std::pair<int, int> dirs[]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    
+    // Matriz de visitados
+    std::vector<std::vector<bool>> visited(map.getHeight(), std::vector<bool>(map.getWidth(), false));
+    
+    // Priority Queue con nuestro Functor
+    std::priority_queue<Node, std::vector<Node>, CompareNodes> OPEN;
+    std::unordered_map<std::pair<int, int>, std::pair<int, int>> pathCache;
+
+    // Nodo inicial
+    OPEN.push({start, Heuristic(start, goal)});
+    visited[start.first][start.second] = true;
+
+    while (!OPEN.empty()) {
+        auto current = OPEN.top();
+        OPEN.pop();
+        std::pair<int, int> pos = current.pos;
+
+        if (pos == goal) {
+            auto endTime = std::chrono::high_resolution_clock::now();
+            std::cout << "FOUND in " << (endTime - startTime).count() / 1000000.0 << "ms\n";
+            return reconstruct(pathCache, pos);
+        }
+
+        for (auto dir : dirs) {
+            std::pair<int, int> next = {pos.first + dir.first, pos.second + dir.second};
+
+            // Validaciones de límites y obstáculos
+            if (next.first < 0 || next.first >= map.getHeight() || 
+                next.second < 0 || next.second >= map.getWidth()) continue;
+
+            if (map._map[next.first][next.second] == 1 || visited[next.first][next.second]) continue;
+
+            visited[next.first][next.second] = true;
+            pathCache[next] = pos;
+            
+            // Insertar con prioridad basada en la heurística al objetivo
+            OPEN.push({next, Heuristic(next, goal)});
+        }
+    }
+
+    std::cout << "NOT FOUND!!!!\n";
+    return {start, goal};
+}
