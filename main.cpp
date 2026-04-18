@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
-    auto path = Search::BFS(map,{atoi(argv[2]),atoi(argv[3])},{atoi(argv[4]),atoi(argv[5])}); 
+    auto path = Search::Greedy(map,{atoi(argv[2]),atoi(argv[3])},{atoi(argv[4]),atoi(argv[5])}); 
     if (path.empty()) {
         std::cout << "No path found\n";
     } else {
