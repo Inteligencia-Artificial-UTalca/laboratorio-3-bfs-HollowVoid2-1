@@ -35,6 +35,10 @@ int main(int argc, char *argv[]){
         std::cerr << "Error: coordenadas fuera del mapa\n";
         return 1;
     }
+    if (map._map[x1][y1] == 1 || map._map[x2][y2] == 1) {
+        std::cerr << "Error: inicio o fin es un obstáculo\n";
+        return 1;
+    }
 
     auto path = Search::Greedy(map,{atoi(argv[2]),atoi(argv[3])},{atoi(argv[4]),atoi(argv[5])}); 
     if (path.empty()) {

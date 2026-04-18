@@ -182,5 +182,5 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
     }
 
     std::cout << "NOT FOUND!!!!\n";
-    return {start, goal};
+    return {};
 }

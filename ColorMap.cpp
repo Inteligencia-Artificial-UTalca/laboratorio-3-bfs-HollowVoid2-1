@@ -18,6 +18,10 @@ ColorMap::ColorMap(const Map& rhs):Map(rhs),colors{37,34,32,31,33}{
 }
 
 void ColorMap::print() const{
+    if (path.empty()) {
+        std::cout << "Path vacío\n";
+        return;
+    }
     for(int i=0;i<h;i++){
         for(int j=0;j<w;j++){
             std::cout<<"\033[1;" << colors[_map[i][j]] << "m"<<_map[i][j]<<" ";
