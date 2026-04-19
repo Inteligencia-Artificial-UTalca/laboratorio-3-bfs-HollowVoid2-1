@@ -4,159 +4,96 @@
 #include <unordered_map>
 #include <iostream>
 #include <limits>
+#include <deque>
+#include <cmath>
+#include <vector>
 
-
-namespace std
-{
-    //this is needed to store a pair<int,int> in an associative container
-    //such as unorered_set and unordered_map
-	template<> struct hash<std::pair<int,int>>
-	{
-		std::size_t operator()( const std::pair<int,int> & p) const noexcept
-		{
+namespace std {
+    // Necesario para usar std::pair<int,int> como clave en unordered_map
+    template<>
+    struct hash<std::pair<int,int>> {
+        std::size_t operator()(const std::pair<int,int>& p) const noexcept {
             hash<int> hasher;
-			return hasher(p.first) ^ (hasher(p.second)<<1);
-
-		}
-	};
+            return hasher(p.first) ^ (hasher(p.second) << 1);
+        }
+    };
 }
 
-// Estructura para guardar en la Priority Queue
+// ========================
+// Estructuras para Greedy
+// ========================
 struct Node {
-    std::pair<int, int> pos;
+    std::pair<int,int> pos;
     float priority;
 };
 
-// Functor para comparación (Min-Priority Queue)
 struct CompareNodes {
-    bool operator()(const Node& n1, const Node& n2) {
-        return n1.priority > n2.priority; // El menor valor tiene mayor prioridad
+    bool operator()(const Node& n1, const Node& n2) const {
+        return n1.priority > n2.priority; // menor prioridad = mayor importancia
     }
 };
 
-float Search::Heuristic(std::pair<int, int> start, std::pair<int, int> goal) {
-    // Implementación Manhattan
+// ========================
+// Estructuras para A*
+// ========================
+struct AStarNode {
+    std::pair<int,int> pos;
+    float g;   // costo acumulado desde el inicio
+    float f;   // f = g + h
+};
+
+struct CompareAStarNode {
+    bool operator()(const AStarNode& a, const AStarNode& b) const {
+        if (a.f != b.f) return a.f > b.f;   // menor f tiene prioridad
+        return a.g < b.g;                   // desempate opcional
+    }
+};
+
+float Search::Heuristic(std::pair<int,int> start, std::pair<int,int> goal) {
+    // Distancia Manhattan
     return std::abs(start.first - goal.first) + std::abs(start.second - goal.second);
 }
 
-std::vector<std::pair<int,int>> Search::reconstruct(const std::unordered_map<std::pair<int,int>,std::pair<int,int>> &pathCache, const std::pair<int,int> &start){
-	std::deque<std::pair<int,int>> nodes;
-	auto node = start;//make copy
+std::vector<std::pair<int,int>> Search::reconstruct(
+    const std::unordered_map<std::pair<int,int>, std::pair<int,int>> &pathCache,
+    const std::pair<int,int> &start) {
 
-    //traverse path from goal to start
+    std::deque<std::pair<int,int>> nodes;
+    auto node = start;
 
-    //
-	while(true){
+    while (true) {
         nodes.push_front(node);
-        
-        if(pathCache.find(node) == pathCache.end())
+
+        auto it = pathCache.find(node);
+        if (it == pathCache.end())
             break;
 
-        node = pathCache.at(node);
-	}
-
-    //revert path and return it
-    std::vector<std::pair<int,int>> vec;
-    for(auto p:nodes){
-        vec.push_back(p);
+        node = it->second;
     }
-    return vec;
+
+    return std::vector<std::pair<int,int>>(nodes.begin(), nodes.end());
 }
 
-std::vector<std::pair<int,int>> Search::BFS(const Map& map, std::pair<int,int> start, std::pair<int,int> goal){
-    std::cout<<"===========================\nRunning BFS...\n";
-	auto startTime = std::chrono::high_resolution_clock::now();
+std::vector<std::pair<int,int>> Search::BFS(
+    const Map& map, std::pair<int,int> start, std::pair<int,int> goal) {
 
-    //stores possible directions
+    std::cout << "===========================\nRunning BFS...\n";
+    auto startTime = std::chrono::high_resolution_clock::now();
+
     std::pair<int,int> dirs[]{{-1,0},{0,1},{1,0},{0,-1}};
 
-    bool visited[map.h][map.w]{false};      //we'll just use a matrix og booleans to indicated if visited
-    std::queue<std::pair<int,int>> OPEN;
-    std::unordered_map<std::pair<int,int>,std::pair<int,int>> pathCache;    ////hashmap to reconstruct path: child -> parent
+    std::vector<std::vector<bool>> visited(
+        map.getHeight(), std::vector<bool>(map.getWidth(), false));
 
-    //add firts node to open list
+    std::queue<std::pair<int,int>> OPEN;
+    std::unordered_map<std::pair<int,int>, std::pair<int,int>> pathCache;
+
     OPEN.push(start);
     visited[start.first][start.second] = true;
 
-    while(!OPEN.empty()){
-        //get node
+    while (!OPEN.empty()) {
         auto pos = OPEN.front();
         OPEN.pop();
-
-        //check if node is goal
-		if(pos==goal){
-			auto endTime = std::chrono::high_resolution_clock::now();
-			int count=0;
-            for(int i=0;i<map.h;i++){
-                for(int j=0;j<map.w;j++){
-                    if(visited[i][j])count++;
-                }
-            }
-            std::cout<<"VISITED: "<<count<<std::endl;
-			std::cout<<"OPEN: "<<OPEN.size()<<std::endl;
-			std::cout<<"FOUND in "<<(endTime-startTime).count()/1000000.0<<"ms\n";
-			return reconstruct(pathCache,pos);
-		}
-
-		for(auto dir:dirs){
-			//copy the position
-            auto next = pos;
-
-            //then move it
-            next.first += dir.first;
-            next.second += dir.second;
-
-            if(next.first < 0 || next.first >= map.h || 
-                next.second < 0 || next.second >= map.w)
-                    continue;
-
-            if(map._map[next.first][next.second] == 1 || 
-                visited[next.first][next.second])
-                    continue;
-            
-            visited[next.first][next.second] = true;
-
-            OPEN.push(next);
-            
-            //if illegal or visited, skip it
-            
-            //add child to open list
-
-            //register path
-
-            pathCache[next] = pos;
-		}
-	}
-	std::cout<<"NOT FOUND!!!!\n";
-    
-    //let's just return start and goal to draw them
-    std::vector<std::pair<int,int>> path;
-    path.push_back(start);
-    path.push_back(goal);
-    return path;
-}
-
-std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, int> start, std::pair<int, int> goal) {
-    std::cout << "===========================\nRunning Greedy Best-First Search...\n";
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    std::pair<int, int> dirs[]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
-    
-    // Matriz de visitados
-    std::vector<std::vector<bool>> visited(map.getHeight(), std::vector<bool>(map.getWidth(), false));
-    
-    // Priority Queue con nuestro Functor
-    std::priority_queue<Node, std::vector<Node>, CompareNodes> OPEN;
-    std::unordered_map<std::pair<int, int>, std::pair<int, int>> pathCache;
-
-    // Nodo inicial
-    OPEN.push({start, Heuristic(start, goal)});
-    visited[start.first][start.second] = true;
-
-    while (!OPEN.empty()) {
-        auto current = OPEN.top();
-        OPEN.pop();
-        std::pair<int, int> pos = current.pos;
 
         if (pos == goal) {
             auto endTime = std::chrono::high_resolution_clock::now();
@@ -165,19 +102,132 @@ std::vector<std::pair<int, int>> Search::Greedy(const Map& map, std::pair<int, i
         }
 
         for (auto dir : dirs) {
-            std::pair<int, int> next = {pos.first + dir.first, pos.second + dir.second};
+            std::pair<int,int> next = {pos.first + dir.first, pos.second + dir.second};
 
-            // Validaciones de límites y obstáculos
-            if (next.first < 0 || next.first >= map.getHeight() || 
-                next.second < 0 || next.second >= map.getWidth()) continue;
+            if (next.first < 0 || next.first >= map.getHeight() ||
+                next.second < 0 || next.second >= map.getWidth())
+                continue;
 
-            if (map._map[next.first][next.second] == 1 || visited[next.first][next.second]) continue;
+            if (map._map[next.first][next.second] == 1 || visited[next.first][next.second])
+                continue;
+
+            visited[next.first][next.second] = true;
+            OPEN.push(next);
+            pathCache[next] = pos;
+        }
+    }
+
+    std::cout << "NOT FOUND!!!!\n";
+    return {};
+}
+
+std::vector<std::pair<int,int>> Search::Greedy(
+    const Map& map, std::pair<int,int> start, std::pair<int,int> goal) {
+
+    std::cout << "===========================\nRunning Greedy Best-First Search...\n";
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    std::pair<int,int> dirs[]{{-1,0},{0,1},{1,0},{0,-1}};
+
+    std::vector<std::vector<bool>> visited(
+        map.getHeight(), std::vector<bool>(map.getWidth(), false));
+
+    std::priority_queue<Node, std::vector<Node>, CompareNodes> OPEN;
+    std::unordered_map<std::pair<int,int>, std::pair<int,int>> pathCache;
+
+    OPEN.push({start, Heuristic(start, goal)});
+    visited[start.first][start.second] = true;
+
+    while (!OPEN.empty()) {
+        auto current = OPEN.top();
+        OPEN.pop();
+
+        std::pair<int,int> pos = current.pos;
+
+        if (pos == goal) {
+            auto endTime = std::chrono::high_resolution_clock::now();
+            std::cout << "FOUND in " << (endTime - startTime).count() / 1000000.0 << "ms\n";
+            return reconstruct(pathCache, pos);
+        }
+
+        for (auto dir : dirs) {
+            std::pair<int,int> next = {pos.first + dir.first, pos.second + dir.second};
+
+            if (next.first < 0 || next.first >= map.getHeight() ||
+                next.second < 0 || next.second >= map.getWidth())
+                continue;
+
+            if (map._map[next.first][next.second] == 1 || visited[next.first][next.second])
+                continue;
 
             visited[next.first][next.second] = true;
             pathCache[next] = pos;
-            
-            // Insertar con prioridad basada en la heurística al objetivo
             OPEN.push({next, Heuristic(next, goal)});
+        }
+    }
+
+    std::cout << "NOT FOUND!!!!\n";
+    return {};
+}
+
+std::vector<std::pair<int,int>> Search::AStar(
+    const Map& map, std::pair<int,int> start, std::pair<int,int> goal) {
+
+    std::cout << "===========================\nRunning A*...\n";
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    std::pair<int,int> dirs[]{{-1,0},{0,1},{1,0},{0,-1}};
+
+    const float INF = std::numeric_limits<float>::infinity();
+
+    std::vector<std::vector<float>> gScore(
+        map.getHeight(), std::vector<float>(map.getWidth(), INF));
+
+    std::vector<std::vector<bool>> closed(
+        map.getHeight(), std::vector<bool>(map.getWidth(), false));
+
+    std::priority_queue<AStarNode, std::vector<AStarNode>, CompareAStarNode> OPEN;
+    std::unordered_map<std::pair<int,int>, std::pair<int,int>> pathCache;
+
+    gScore[start.first][start.second] = 0.0f;
+    OPEN.push({start, 0.0f, Heuristic(start, goal)});
+
+    while (!OPEN.empty()) {
+        AStarNode current = OPEN.top();
+        OPEN.pop();
+
+        auto pos = current.pos;
+
+        if (closed[pos.first][pos.second])
+            continue;
+
+        closed[pos.first][pos.second] = true;
+
+        if (pos == goal) {
+            auto endTime = std::chrono::high_resolution_clock::now();
+            std::cout << "FOUND in " << (endTime - startTime).count() / 1000000.0 << "ms\n";
+            return reconstruct(pathCache, goal);
+        }
+
+        for (auto dir : dirs) {
+            std::pair<int,int> next = {pos.first + dir.first, pos.second + dir.second};
+
+            if (next.first < 0 || next.first >= map.getHeight() ||
+                next.second < 0 || next.second >= map.getWidth())
+                continue;
+
+            if (map._map[next.first][next.second] == 1)
+                continue;
+
+            float tentativeG = gScore[pos.first][pos.second] + 1.0f;
+
+            if (tentativeG < gScore[next.first][next.second]) {
+                gScore[next.first][next.second] = tentativeG;
+                pathCache[next] = pos;
+
+                float f = tentativeG + Heuristic(next, goal);
+                OPEN.push({next, tentativeG, f});
+            }
         }
     }
 
